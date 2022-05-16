@@ -32,8 +32,8 @@ def __main(video):
     pushover_config = cli.get_pushover_config()
 
     if server_config:
-        server = Server(server_config)
-        server.start()
+        # server = Server(server_config)
+        # server.start()
 
         if server_config["server_only"]:
             return

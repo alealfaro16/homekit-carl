@@ -1,11 +1,13 @@
 import requests
 import numpy as np
 from threading import Thread
+import subprocess
 
 from housecarl.library import utility
 from housecarl.library.camera.image import mat_to_bytes
 
 PUSHOVER_API_URL = "https://api.pushover.net/1/messages.json"
+SCRIPT_PATH = 'housecarl/library/notifier/MotionCamera.js'
 
 class Pushover:
     def __init__(self, config):
@@ -15,36 +17,40 @@ class Pushover:
     def __verify_tokens(self, config):
         if self.mock:
             return
-        elif not self.user_key:
-            raise Exception("config.pushover_user_key is required")
-        elif not self.api_token:
-            raise Exception("config.pushover_api_token is required")
+        # elif not self.user_key:
+        #     raise Exception("config.pushover_user_key is required")
+        # elif not self.api_token:
+        #     raise Exception("config.pushover_api_token is required")
 
     def __send_push_notification(self, message: str, image: np.ndarray = None):
-        kwargs = {
-            "data": {
-                "token": self.api_token,
-                "user": self.user_key,
-                "message": message
-            }
-        }
 
-        if image is not None:
-            im_bytes = mat_to_bytes(image)
-            if im_bytes:
-                kwargs["files"] = {
-                    "attachment": ("image.jpg", im_bytes, "image/jpeg")
-                }
-            else:
-                utility.warn('Could not convert image to byes.')
+        subprocess.call(['node', SCRIPT_PATH, 'Set', 'Camera', 'MotionDetected', '1'])
+        # state = subprocess.call(['node', SCRIPT_PATH, 'Get', 'Camera', 'MotionDetected'])
+        # print("Motion detected: ",state)
+        # kwargs = {
+        #     "data": {
+        #         "token": self.api_token,
+        #         "user": self.user_key,
+        #         "message": message
+        #     }
+        # }
 
-        r = requests.post(PUSHOVER_API_URL, **kwargs)
+        # if image is not None:
+        #     im_bytes = mat_to_bytes(image)
+        #     if im_bytes:
+        #         kwargs["files"] = {
+        #             "attachment": ("image.jpg", im_bytes, "image/jpeg")
+        #         }
+        #     else:
+        #         utility.warn('Could not convert image to byes.')
 
-        json_response = r.json()
+        # r = requests.post(PUSHOVER_API_URL, **kwargs)
 
-        if json_response.get('status') != 1:
-            utility.error('Pushover error!\n')
-            print(json_response)
+        # json_response = r.json()
+
+        # if json_response.get('status') != 1:
+        #     utility.error('Pushover error!\n')
+        #     print(json_response)
 
     def send_push_notification(self, message: str, image: np.ndarray = None):
         if self.mock:
